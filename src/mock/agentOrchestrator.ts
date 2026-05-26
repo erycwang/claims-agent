@@ -62,23 +62,37 @@ export async function* runAgentPipelinePart2(
       : `Fraud risk score: **61/100 (Elevated)**. Flagged for adjuster review.`,
   }
 
-  // Tool 4 — Estimate Calculator
-  yield { id: 4, name: 'Estimate Calculator', description: 'Computing preliminary repair cost estimate', status: 'running' }
-  await delay(1600)
+  // Tool 4 — Policy RAG & Coverage Checker
+  yield { id: 4, name: 'Policy RAG & Coverage Checker', description: 'Matching damage items against active policy terms', status: 'running' }
+  await delay(1400)
+  const inPolicyCount = confirmedItems.filter(i => i.severity !== 'minor' && !(i.severity === 'moderate' && outcome === 'pending')).length
   yield {
     id: 4,
+    name: 'Policy RAG & Coverage Checker',
+    description: 'Matching damage items against active policy terms',
+    status: 'complete',
+    output: outcome === 'approved'
+      ? `**${inPolicyCount} of ${confirmedItems.length} items** within policy coverage limits.`
+      : `**${inPolicyCount} of ${confirmedItems.length} items** within policy coverage limits. Causation verification required.`,
+  }
+
+  // Tool 5 — Estimate Calculator
+  yield { id: 5, name: 'Estimate Calculator', description: 'Computing preliminary repair cost estimate', status: 'running' }
+  await delay(1600)
+  yield {
+    id: 5,
     name: 'Estimate Calculator',
     description: 'Computing preliminary repair cost estimate',
     status: 'complete',
     output: `Repair estimate: **$${estimateLow.toLocaleString()}–$${estimateHigh.toLocaleString()}** across ${confirmedItems.length} damage areas.`,
   }
 
-  // Tool 5 — Repair Shop & Claim ID
-  yield { id: 5, name: 'Repair Shop & Claim ID Provider', description: 'Assigning claim ID and locating approved repair facilities', status: 'running' }
+  // Tool 6 — Repair Shop & Claim ID
+  yield { id: 6, name: 'Repair Shop & Claim ID Provider', description: 'Assigning claim ID and locating approved repair facilities', status: 'running' }
   await delay(1300)
   const claimId = `CLM-${Math.floor(10000 + Math.random() * 90000)}`
   yield {
-    id: 5,
+    id: 6,
     name: 'Repair Shop & Claim ID Provider',
     description: 'Assigning claim ID and locating approved repair facilities',
     status: 'complete',

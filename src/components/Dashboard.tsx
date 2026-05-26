@@ -10,9 +10,11 @@ interface DashboardProps {
   onOutcomeChange: (o: DemoOutcome) => void
   onFileClaim: () => void
   recentClaim?: CompletedClaim | null
+  onViewPrd: () => void
+  onViewArchitecture: () => void
 }
 
-export function Dashboard({ demoOutcome, onOutcomeChange, onFileClaim, recentClaim }: DashboardProps) {
+export function Dashboard({ demoOutcome, onOutcomeChange, onFileClaim, recentClaim, onViewPrd, onViewArchitecture }: DashboardProps) {
   const [expandedClaim, setExpandedClaim] = useState(false)
 
   const claimDate = recentClaim
@@ -30,10 +32,27 @@ export function Dashboard({ demoOutcome, onOutcomeChange, onFileClaim, recentCla
           </div>
           <span className="text-neutral-900 dark:text-neutral-100 font-medium text-sm tracking-tight">InsureCo</span>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-neutral-500 text-sm">{mockPolicy.holderName}</span>
-          <div className="w-7 h-7 rounded-full bg-violet-100 dark:bg-violet-600/20 flex items-center justify-center text-violet-700 dark:text-violet-400 text-xs font-semibold">
-            {mockPolicy.holderName[0]}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1 border border-neutral-200 rounded-lg overflow-hidden text-xs">
+            <button
+              onClick={onViewPrd}
+              className="px-3 py-1.5 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 transition-colors cursor-pointer"
+            >
+              PRD
+            </button>
+            <div className="w-px h-4 bg-neutral-200" />
+            <button
+              onClick={onViewArchitecture}
+              className="px-3 py-1.5 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 transition-colors cursor-pointer"
+            >
+              Architecture
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-neutral-500 text-sm">{mockPolicy.holderName}</span>
+            <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center text-violet-700 text-xs font-semibold">
+              {mockPolicy.holderName[0]}
+            </div>
           </div>
         </div>
       </header>

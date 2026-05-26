@@ -1,4 +1,4 @@
-export type AppStage = 'dashboard' | 'form' | 'submitting' | 'agent'
+export type AppStage = 'dashboard' | 'form' | 'submitting' | 'agent' | 'prd' | 'architecture'
 
 export type DemoOutcome = 'approved' | 'pending'
 

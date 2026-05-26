@@ -5,6 +5,8 @@ import { Dashboard } from './components/Dashboard'
 import { ClaimForm } from './components/ClaimForm'
 import { ClaimSubmitTransition } from './components/ClaimSubmitTransition'
 import { AgentWorkflow } from './components/AgentWorkflow'
+import { PrdView } from './components/PrdView'
+import { ArchitectureView } from './components/ArchitectureView'
 
 export default function App() {
   const [stage, setStage] = useState<AppStage>('dashboard')
@@ -23,10 +25,24 @@ export default function App() {
     setStage('dashboard')
   }
 
-  const wrapperCls = 'h-full bg-neutral-50'
+  if (stage === 'prd') {
+    return (
+      <div className="h-full">
+        <PrdView onBack={goHome} onViewArchitecture={() => setStage('architecture')} />
+      </div>
+    )
+  }
+
+  if (stage === 'architecture') {
+    return (
+      <div className="h-full">
+        <ArchitectureView onBack={goHome} onViewPrd={() => setStage('prd')} />
+      </div>
+    )
+  }
 
   return (
-    <div className={wrapperCls}>
+    <div className="h-full bg-neutral-50">
       {stage === 'form' && (
         <ClaimForm onSubmit={handleFormSubmit} onCancel={goHome} onHome={goHome} />
       )}
@@ -48,6 +64,8 @@ export default function App() {
           onOutcomeChange={setDemoOutcome}
           onFileClaim={() => setStage('form')}
           recentClaim={completedClaim}
+          onViewPrd={() => setStage('prd')}
+          onViewArchitecture={() => setStage('architecture')}
         />
       )}
     </div>
