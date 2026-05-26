@@ -73,8 +73,6 @@ npm install
 npm run dev
 ```
 
-The app runs at `http://localhost:5173`.
-
 ### Demo Mode
 
 The dashboard includes an **outcome toggle** (Approved / Pending) so you can walk through both claim resolution paths. All agent tool calls are simulated with realistic timing and structured outputs.
