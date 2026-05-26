@@ -35,12 +35,6 @@ export function Dashboard({ demoOutcome, onOutcomeChange, onFileClaim, recentCla
         </div>
         <div className="flex items-center gap-4">
           <TabNav active="demo" onDemo={() => {}} onPrd={onViewPrd} onArchitecture={onViewArchitecture} />
-          <div className="flex items-center gap-2">
-            <span className="text-neutral-500 text-sm">{mockPolicy.holderName}</span>
-            <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center text-violet-700 text-xs font-semibold">
-              {mockPolicy.holderName[0]}
-            </div>
-          </div>
         </div>
       </header>
 
