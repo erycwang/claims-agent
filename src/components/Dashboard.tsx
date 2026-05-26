@@ -4,6 +4,7 @@ import { mockPolicy } from '../mock/policyData'
 import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
 import { Card } from './ui/Card'
+import { TabNav } from './ui/TabNav'
 
 interface DashboardProps {
   demoOutcome: DemoOutcome
@@ -33,21 +34,7 @@ export function Dashboard({ demoOutcome, onOutcomeChange, onFileClaim, recentCla
           <span className="text-neutral-900 dark:text-neutral-100 font-medium text-sm tracking-tight">InsureCo</span>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1 border border-neutral-200 rounded-lg overflow-hidden text-xs">
-            <button
-              onClick={onViewPrd}
-              className="px-3 py-1.5 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 transition-colors cursor-pointer"
-            >
-              PRD
-            </button>
-            <div className="w-px h-4 bg-neutral-200" />
-            <button
-              onClick={onViewArchitecture}
-              className="px-3 py-1.5 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 transition-colors cursor-pointer"
-            >
-              Architecture
-            </button>
-          </div>
+          <TabNav active="demo" onDemo={() => {}} onPrd={onViewPrd} onArchitecture={onViewArchitecture} />
           <div className="flex items-center gap-2">
             <span className="text-neutral-500 text-sm">{mockPolicy.holderName}</span>
             <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center text-violet-700 text-xs font-semibold">

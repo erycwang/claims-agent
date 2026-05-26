@@ -1,3 +1,5 @@
+import { TabNav } from './ui/TabNav'
+
 interface PrdViewProps {
   onBack: () => void
   onViewArchitecture: () => void
@@ -15,25 +17,15 @@ export function PrdView({ onBack, onViewArchitecture }: PrdViewProps) {
   return (
     <div className="h-full flex flex-col bg-white">
       <header className="shrink-0 border-b border-neutral-200 px-6 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900 transition-colors cursor-pointer"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        <div className="flex items-center gap-2.5">
+          <div className="w-6 h-6 bg-violet-600 rounded-md flex items-center justify-center">
+            <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
-            Demo
-          </button>
-          <div className="h-4 w-px bg-neutral-200" />
-          <span className="text-sm font-medium text-neutral-900">PRD</span>
+          </div>
+          <span className="text-neutral-900 font-medium text-sm tracking-tight">InsureCo</span>
         </div>
-        <button
-          onClick={onViewArchitecture}
-          className="text-sm text-neutral-500 hover:text-violet-600 transition-colors cursor-pointer"
-        >
-          Architecture →
-        </button>
+        <TabNav active="prd" onDemo={onBack} onPrd={() => {}} onArchitecture={onViewArchitecture} />
       </header>
 
       <div className="flex-1 overflow-y-auto">
