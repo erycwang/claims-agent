@@ -10,6 +10,7 @@ export interface FileMetadata {
 }
 
 export interface ClaimFormData {
+  claimType: string
   dateTime: string
   location: string
   description: string
@@ -38,6 +39,15 @@ export interface DamageItem {
   severity: 'minor' | 'moderate' | 'severe'
 }
 
+export interface DamageDecision {
+  itemId: string
+  area: string
+  severity: 'minor' | 'moderate' | 'severe'
+  approved: boolean
+  rejectionReason?: string
+  policyClause?: string
+}
+
 export interface ClaimOutcome {
   status: 'approved' | 'pending'
   claimId?: string
@@ -47,6 +57,7 @@ export interface ClaimOutcome {
     phone: string
   }
   pendingReason?: string
+  damageDecisions?: DamageDecision[]
 }
 
 export interface CompletedClaim {

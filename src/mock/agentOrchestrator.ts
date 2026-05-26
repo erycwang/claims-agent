@@ -1,4 +1,4 @@
-import type { ClaimFormData, ToolResult, DamageItem, ClaimOutcome } from '../types/claims'
+import type { ClaimFormData, DamageDecision, DamageItem, ClaimOutcome, ToolResult } from '../types/claims'
 
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms))
 
@@ -10,7 +10,7 @@ const DAMAGE_ITEMS: DamageItem[] = [
 ]
 
 export async function* runAgentPipeline(
-  formData: ClaimFormData,
+  _formData: ClaimFormData,
   _outcome: 'approved' | 'pending',
   _confirmedDamageItems?: DamageItem[]
 ): AsyncGenerator<ToolResult> {
@@ -23,7 +23,7 @@ export async function* runAgentPipeline(
     name: 'Intent Classifier',
     description: 'Validating request intent and claim type',
     status: 'complete',
-    output: `Claim type identified: **Collision**. Policy ${formData.opposingPolicyNumber ? 'includes' : 'requires verification of'} third-party coverage. Proceeding to damage analysis.`,
+    output: `**Collision claim** confirmed. Third-party coverage verified.`,
   }
 
   // Tool 2 — Damage Assessment
@@ -34,14 +34,14 @@ export async function* runAgentPipeline(
     name: 'Damage Assessment & Categorization',
     description: 'Analyzing uploaded images and incident description',
     status: 'complete',
-    output: `Detected ${DAMAGE_ITEMS.length} damage areas. Severity classification complete. **Human review required** before proceeding.`,
+    output: `**${DAMAGE_ITEMS.length} damage areas** detected. Review required before proceeding.`,
     pauseForReview: true,
     damageItems: DAMAGE_ITEMS,
   }
 }
 
 export async function* runAgentPipelinePart2(
-  formData: ClaimFormData,
+  _formData: ClaimFormData,
   outcome: 'approved' | 'pending',
   confirmedItems: DamageItem[]
 ): AsyncGenerator<ToolResult> {
@@ -58,8 +58,8 @@ export async function* runAgentPipelinePart2(
     description: 'Checking claim anomalies and policy history',
     status: 'complete',
     output: outcome === 'approved'
-      ? `No anomalies detected. Policy in good standing — 0 prior claims in 36 months. Fraud risk score: **2/100 (Low)**.`
-      : `Flagged for review: claim submitted within 30 days of policy renewal. Fraud risk score: **61/100 (Elevated)**. Escalation recommended.`,
+      ? `No anomalies detected. Fraud risk score: **2/100 (Low)**.`
+      : `Fraud risk score: **61/100 (Elevated)**. Flagged for adjuster review.`,
   }
 
   // Tool 4 — Estimate Calculator
@@ -70,7 +70,7 @@ export async function* runAgentPipelinePart2(
     name: 'Estimate Calculator',
     description: 'Computing preliminary repair cost estimate',
     status: 'complete',
-    output: `Preliminary estimate: **$${estimateLow.toLocaleString()}–$${estimateHigh.toLocaleString()}**. Based on ${confirmedItems.length} damage areas, 2022 Tesla Model 3 parts pricing, and regional labor rates in ${formData.location || 'your area'}.`,
+    output: `Repair estimate: **$${estimateLow.toLocaleString()}–$${estimateHigh.toLocaleString()}** across ${confirmedItems.length} damage areas.`,
   }
 
   // Tool 5 — Repair Shop & Claim ID
@@ -83,33 +83,42 @@ export async function* runAgentPipelinePart2(
     description: 'Assigning claim ID and locating approved repair facilities',
     status: 'complete',
     output: outcome === 'approved'
-      ? `Claim ID assigned: **${claimId}**. Nearest approved facility: **Greenway Auto Body** — 1482 Oak Street, ${formData.location || 'your city'}. Certified Tesla repair center.`
-      : `Claim ID tentatively assigned: **${claimId}** (pending adjuster approval). Shop assignment on hold pending review.`,
-  }
-
-  // Tool 6 — Escalation & Documentation
-  yield { id: 6, name: 'Escalation & Documentation Provider', description: 'Generating claim summary and escalation routing', status: 'running' }
-  await delay(1400)
-  yield {
-    id: 6,
-    name: 'Escalation & Documentation Provider',
-    description: 'Generating claim summary and escalation routing',
-    status: 'complete',
-    output: outcome === 'approved'
-      ? `Documentation package generated. Claim summary emailed to alex.johnson@email.com. No escalation required.`
-      : `Claim routed to senior adjuster queue. Expected review window: 2–3 business days. Documentation package created and flagged for manual review.`,
+      ? `Claim **${claimId}** assigned. Nearest shop: **Greenway Auto Body**, 0.8 mi.`
+      : `Claim **${claimId}** tentatively assigned. Shop assignment on hold.`,
   }
 }
 
 export const SCRIPTED_RESPONSES: Record<string, string> = {
   "What's the status of my claim?":
-    "Your claim is currently being processed by our review team. All 6 automated checks have completed. You'll receive an email confirmation within 24 hours once a final decision is made.",
+    "Your claim is currently being processed by our review team. All automated checks have completed. You'll receive an email confirmation within 24 hours once a final decision is made.",
   "I have additional damage to report":
     "To add additional damage, please contact your assigned adjuster directly or call our claims line at 1-800-555-0192. Reference your claim ID when you call.",
   "What does this estimate cover?":
     "The preliminary estimate covers parts and labor for all confirmed damage areas based on manufacturer pricing and regional labor rates. It does not include rental coverage or diminished value — those are assessed separately.",
   "How do I contact support?":
     "You can reach our claims support team at **1-800-555-0192** (Mon–Fri, 8am–8pm) or email **claims@insureco.com**. Your claim ID is required for faster service.",
+}
+
+function buildDamageDecisions(items: DamageItem[], outcome: 'approved' | 'pending'): DamageDecision[] {
+  return items.map(item => {
+    if (item.severity === 'minor') {
+      return {
+        itemId: item.id, area: item.area, severity: item.severity,
+        approved: false,
+        rejectionReason: 'Surface-level cosmetic damage is excluded from collision coverage. Only structural or safety-related damage qualifies.',
+        policyClause: '§4.3.1 — Cosmetic & Appearance Exclusion',
+      }
+    }
+    if (item.severity === 'moderate' && outcome === 'pending') {
+      return {
+        itemId: item.id, area: item.area, severity: item.severity,
+        approved: false,
+        rejectionReason: 'Damage causation could not be conclusively attributed to the reported incident. Manual adjuster verification is required before coverage can be confirmed.',
+        policyClause: '§3.1 — Incident Causation Requirement',
+      }
+    }
+    return { itemId: item.id, area: item.area, severity: item.severity, approved: true }
+  })
 }
 
 export function buildOutcome(
@@ -119,11 +128,13 @@ export function buildOutcome(
 ): ClaimOutcome {
   const severeCount = confirmedItems.filter(i => i.severity === 'severe').length
   const claimId = `CLM-${Math.floor(10000 + Math.random() * 90000)}`
+  const damageDecisions = buildDamageDecisions(confirmedItems, outcome)
 
   if (outcome === 'approved') {
     return {
       status: 'approved',
       claimId,
+      damageDecisions,
       repairShop: {
         name: 'Greenway Auto Body',
         address: `1482 Oak Street, ${formData.location || 'your city'}`,
@@ -134,6 +145,7 @@ export function buildOutcome(
   return {
     status: 'pending',
     claimId,
+    damageDecisions,
     pendingReason:
       severeCount > 1
         ? 'Claim requires senior adjuster review due to elevated fraud risk score and severity of reported damages.'

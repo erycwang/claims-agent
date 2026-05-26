@@ -9,9 +9,10 @@ interface ClaimFormProps {
   onHome: () => void
 }
 
-type Step = 1 | 2 | 3
+type Step = 1 | 2 | 3 | 4
 
 const empty: ClaimFormData = {
+  claimType: '',
   dateTime: '',
   location: '',
   description: '',
@@ -22,7 +23,28 @@ const empty: ClaimFormData = {
   policeReport: [],
 }
 
-const STEP_LABELS = ['Accident Details', 'Opposing Party', 'Documents']
+const STEP_LABELS = ['Claim Type', 'Accident Details', 'Opposing Party', 'Documents']
+
+const CLAIM_TYPES = [
+  {
+    id: 'collision',
+    label: 'Collision',
+    description: 'Covers damage to your vehicle resulting from a collision with another car or object.',
+    available: true,
+  },
+  {
+    id: 'liability',
+    label: 'Liability',
+    description: 'Covers damage or injury you cause to another person or their property.',
+    available: false,
+  },
+  {
+    id: 'bodily_injury',
+    label: 'Bodily Injury',
+    description: 'Covers medical expenses and related costs for injuries sustained in an accident.',
+    available: false,
+  },
+]
 
 export function ClaimForm({ onSubmit, onHome }: ClaimFormProps) {
   const [step, setStep] = useState<Step>(1)
@@ -36,6 +58,13 @@ export function ClaimForm({ onSubmit, onHome }: ClaimFormProps) {
 
   const validateStep1 = () => {
     const e: typeof errors = {}
+    if (!form.claimType) e.claimType = 'Please select a claim type'
+    setErrors(e)
+    return Object.keys(e).length === 0
+  }
+
+  const validateStep2 = () => {
+    const e: typeof errors = {}
     if (!form.dateTime) e.dateTime = 'Required'
     if (!form.location.trim()) e.location = 'Required'
     if (!form.description.trim()) e.description = 'Required'
@@ -44,7 +73,7 @@ export function ClaimForm({ onSubmit, onHome }: ClaimFormProps) {
     return Object.keys(e).length === 0
   }
 
-  const validateStep2 = () => {
+  const validateStep3 = () => {
     const e: typeof errors = {}
     if (!form.opposingPartyName.trim()) e.opposingPartyName = 'Required'
     if (!form.opposingPolicyNumber.trim()) e.opposingPolicyNumber = 'Required'
@@ -55,6 +84,7 @@ export function ClaimForm({ onSubmit, onHome }: ClaimFormProps) {
   const handleNext = () => {
     if (step === 1 && validateStep1()) setStep(2)
     else if (step === 2 && validateStep2()) setStep(3)
+    else if (step === 3 && validateStep3()) setStep(4)
   }
 
   const handleBack = () => {
@@ -62,6 +92,8 @@ export function ClaimForm({ onSubmit, onHome }: ClaimFormProps) {
   }
 
   const handleSubmit = () => onSubmit(form)
+
+  const selectedType = CLAIM_TYPES.find(t => t.id === form.claimType)
 
   return (
     <div className="min-h-full bg-neutral-50 dark:bg-neutral-950 flex flex-col">
@@ -77,10 +109,10 @@ export function ClaimForm({ onSubmit, onHome }: ClaimFormProps) {
         </button>
         <div className="flex-1">
           <h1 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">File a New Claim</h1>
-          <p className="text-xs text-neutral-400 dark:text-neutral-600">{STEP_LABELS[step - 1]} — Step {step} of 3</p>
+          <p className="text-xs text-neutral-400 dark:text-neutral-600">{STEP_LABELS[step - 1]} — Step {step} of 4</p>
         </div>
         <div className="flex items-center gap-1">
-          {[1, 2, 3].map(s => (
+          {[1, 2, 3, 4].map(s => (
             <div
               key={s}
               className={`h-1 w-6 rounded-full transition-colors ${s <= step ? 'bg-violet-500' : 'bg-neutral-200 dark:bg-neutral-800'}`}
@@ -94,8 +126,74 @@ export function ClaimForm({ onSubmit, onHome }: ClaimFormProps) {
           {step === 1 && (
             <div className="space-y-5">
               <div>
-                <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Accident Details</h2>
-                <p className="text-sm text-neutral-500 mt-0.5">Tell us what happened.</p>
+                <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">What type of claim are you filing?</h2>
+                <p className="text-sm text-neutral-500 mt-0.5">Select the category that best describes your situation.</p>
+              </div>
+
+              <div className="space-y-3">
+                {CLAIM_TYPES.map(type => {
+                  const isSelected = form.claimType === type.id
+                  return (
+                    <button
+                      key={type.id}
+                      type="button"
+                      disabled={!type.available}
+                      onClick={() => type.available && set('claimType', type.id)}
+                      className={`w-full text-left p-4 rounded-xl border transition-all ${
+                        !type.available
+                          ? 'border-neutral-200 bg-neutral-50 cursor-not-allowed opacity-50'
+                          : isSelected
+                            ? 'border-violet-500 bg-violet-50 cursor-pointer'
+                            : 'border-neutral-200 bg-white hover:border-neutral-300 cursor-pointer'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mt-0.5 shrink-0 transition-colors ${
+                          isSelected ? 'border-violet-500' : 'border-neutral-300'
+                        }`}>
+                          {isSelected && <div className="w-2 h-2 rounded-full bg-violet-500" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-sm font-medium ${!type.available ? 'text-neutral-400' : 'text-neutral-900'}`}>
+                              {type.label}
+                            </span>
+                            {!type.available && (
+                              <span className="text-xs text-neutral-400 bg-neutral-100 rounded-full px-2 py-0.5">
+                                Not available in demo
+                              </span>
+                            )}
+                          </div>
+                          <p className={`text-xs mt-0.5 leading-relaxed ${!type.available ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                            {type.description}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {errors.claimType && <p className="text-xs text-red-500">{errors.claimType}</p>}
+
+              <div className="flex justify-end pt-1">
+                <Button size="lg" onClick={handleNext}>Continue</Button>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-5">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Accident Details</h2>
+                  {selectedType && (
+                    <span className="text-xs bg-violet-100 text-violet-700 rounded-full px-2 py-0.5 font-medium">
+                      {selectedType.label}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-neutral-500">Tell us what happened.</p>
               </div>
 
               <Field label="Date of Accident" error={errors.dateTime}>
@@ -138,13 +236,14 @@ export function ClaimForm({ onSubmit, onHome }: ClaimFormProps) {
                 />
               </Field>
 
-              <div className="flex justify-end pt-1">
+              <div className="flex justify-between pt-1">
+                <Button variant="ghost" size="lg" onClick={handleBack}>Back</Button>
                 <Button size="lg" onClick={handleNext}>Continue</Button>
               </div>
             </div>
           )}
 
-          {step === 2 && (
+          {step === 3 && (
             <div className="space-y-5">
               <div>
                 <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Opposing Party</h2>
@@ -178,7 +277,7 @@ export function ClaimForm({ onSubmit, onHome }: ClaimFormProps) {
             </div>
           )}
 
-          {step === 3 && (
+          {step === 4 && (
             <div className="space-y-5">
               <div>
                 <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Supporting Documents</h2>

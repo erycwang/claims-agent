@@ -53,6 +53,7 @@ export function AgentWorkflow({ formData, demoOutcome, vehicle, onHome, onClaimC
   const [chat, setChat] = useState<ChatMessage[]>([])
   const [adjusterProgress, setAdjusterProgress] = useState(0)
   const [showAllShops, setShowAllShops] = useState(false)
+  const [showCoverageSheet, setShowCoverageSheet] = useState(false)
   const feedRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -135,7 +136,7 @@ export function AgentWorkflow({ formData, demoOutcome, vehicle, onHome, onClaimC
   const allPart1Done = tools.length >= 2 && tools[1]?.status === 'complete'
 
   return (
-    <div className="h-full flex flex-col bg-neutral-50 dark:bg-neutral-950 overflow-hidden">
+    <div className="relative h-full flex flex-col bg-neutral-50 dark:bg-neutral-950 overflow-hidden">
       <header className="shrink-0 border-b border-neutral-200 dark:border-neutral-800 px-6 py-3.5 flex items-center gap-3">
         <button
           onClick={onHome}
@@ -409,7 +410,115 @@ export function AgentWorkflow({ formData, demoOutcome, vehicle, onHome, onClaimC
         </div>
       </div>
 
+      {/* Sticky coverage bar — appears once outcome is ready */}
+      {phase === 'done' && outcome?.damageDecisions && outcome.damageDecisions.length > 0 && (() => {
+        const approved = outcome.damageDecisions!.filter(d => d.approved).length
+        const excluded = outcome.damageDecisions!.length - approved
+        return (
+          <div className="shrink-0 px-4 pb-1">
+            <div className="max-w-xl mx-auto">
+              <button
+                onClick={() => setShowCoverageSheet(true)}
+                className="w-full flex items-center justify-between bg-white border border-neutral-200 rounded-xl px-4 py-2.5 hover:bg-neutral-50 transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-neutral-600">Coverage Decision</span>
+                  <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full px-2 py-0.5">
+                    {approved} covered
+                  </span>
+                  {excluded > 0 && (
+                    <span className="text-xs bg-red-50 text-red-600 border border-red-100 rounded-full px-2 py-0.5">
+                      {excluded} excluded
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs text-violet-600 group-hover:underline">View details →</span>
+              </button>
+            </div>
+          </div>
+        )
+      })()}
+
       <ChatInput onSend={handleChat} disabled={!allPart1Done} />
+
+      {/* Coverage bottom sheet */}
+      {outcome?.damageDecisions && (
+        <div
+          className={`absolute inset-0 z-20 flex flex-col justify-end transition-opacity duration-200 ${showCoverageSheet ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        >
+          <div className="absolute inset-0 bg-black/20" onClick={() => setShowCoverageSheet(false)} />
+          <div className={`relative bg-white border-t border-neutral-200 rounded-t-2xl overflow-hidden transition-transform duration-250 ease-out ${showCoverageSheet ? 'translate-y-0' : 'translate-y-full'}`}
+            style={{ maxHeight: '72%' }}>
+            {/* Sheet header */}
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-neutral-100">
+              <div>
+                <p className="text-sm font-semibold text-neutral-900">Damage Coverage Decision</p>
+                <p className="text-xs text-neutral-400 mt-0.5">
+                  {outcome.damageDecisions.filter(d => d.approved).length} items covered · {outcome.damageDecisions.filter(d => !d.approved).length} excluded
+                </p>
+              </div>
+              <button
+                onClick={() => setShowCoverageSheet(false)}
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Decision rows */}
+            <div className="overflow-y-auto divide-y divide-neutral-50" style={{ maxHeight: 'calc(72vh - 120px)' }}>
+              {outcome.damageDecisions.map(d => (
+                <div key={d.itemId} className="px-5 py-3.5">
+                  <div className="flex items-start gap-3">
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                      d.approved ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'
+                    }`}>
+                      {d.approved ? (
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium text-neutral-900">{d.area}</span>
+                        <span className={`text-xs rounded-full px-2 py-0.5 ${
+                          d.severity === 'severe' ? 'bg-red-50 text-red-600' :
+                          d.severity === 'moderate' ? 'bg-amber-50 text-amber-600' :
+                          'bg-neutral-100 text-neutral-500'
+                        }`}>{d.severity}</span>
+                      </div>
+                      {!d.approved && d.rejectionReason && (
+                        <div className="mt-1.5 space-y-0.5">
+                          <p className="text-xs text-neutral-500 leading-relaxed">{d.rejectionReason}</p>
+                          {d.policyClause && (
+                            <p className="text-xs text-neutral-400 font-mono">{d.policyClause}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <span className={`text-xs font-medium shrink-0 mt-0.5 ${d.approved ? 'text-emerald-600' : 'text-red-500'}`}>
+                      {d.approved ? 'Covered' : 'Excluded'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {outcome.damageDecisions.some(d => !d.approved) && (
+              <div className="px-5 py-3 bg-neutral-50 border-t border-neutral-100">
+                <p className="text-xs text-neutral-400">Exclusions are based on your active policy terms. Call <span className="text-violet-600">1-800-555-0192</span> to dispute a coverage decision.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
